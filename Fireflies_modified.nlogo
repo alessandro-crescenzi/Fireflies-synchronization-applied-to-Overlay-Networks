@@ -1,3 +1,8 @@
+globals [
+  upper-cycle-length
+  lower-cycle-length
+]
+
 turtles-own
 [ clock        ;; each firefly's clock
   threshold    ;; the clock tick at which a firefly stops its flash
@@ -5,24 +10,24 @@ turtles-own
   ;window       ;; a firefly can't reset its cycle if (clock <= window)
   cycle-length
   natural-cycle-length
+  first-cycle-length
+  first-flash
 ]
 
 to setup
   clear-all
+  set upper-cycle-length 115
+  set lower-cycle-length 85
   create-turtles number
     [ setxy random-xcor random-ycor
       set shape "butterfly"
-      ;; set natural-cycle-length lower-cycle-length + (random (upper-cycle-length - lower-cycle-length))
-      set natural-cycle-length 1
+      set first-cycle-length random(300)
+      set first-flash 0
+      set natural-cycle-length lower-cycle-length + (random (upper-cycle-length - lower-cycle-length))
       set cycle-length natural-cycle-length
       set clock random (round cycle-length)
       set threshold flash-length
       set reset-level threshold
-      ;ifelse strategy = "delay"
-      ;[ set reset-level threshold
-      ;  set window -1 ]
-      ;[ set reset-level 0
-      ;  set window (threshold + 1) ]
       set size 2  ;; easier to see
       recolor ]
   reset-ticks
@@ -58,21 +63,28 @@ end
 
 to increment-clock ; turtle procedure
   set clock (clock + 1)
-  if clock = cycle-length
-    [ set clock 0 ]
+  if clock = first-cycle-length and first-flash = 0 [
+   set first-flash 1
+   set clock 0
+  ]
+  if clock = cycle-length and first-flash = 1 [
+    set clock 0
+  ]
 end
 
 to look ; turtle procedure
-  if count turtles in-radius 1 with [color = yellow] >= flashes-to-reset [
-    let _sin (sin 2 * pi * ( clock / cycle-length ) ) / 2 * 3.14
+  if count turtles in-radius 10 with [color = yellow] >= flashes-to-reset [
+    let _sin (sin ( 2 * pi * ( clock / cycle-length ) ) ) / (2 * pi)
     let _max  0
     if _sin > 0 [ set _max _sin ]
     let _min 0
     if _sin < 0 [ set _min _sin ]
-    ;set cycle-length 1 / cycle-length
-    ;set cycle-length cycle-length + epsilon * ( 1 / natural-cycle-length - cycle-length) + _max * ( 1 / upper-cycle-length - cycle-length ) - _min * ( 1 / lower-cycle-length - cycle-length )
-    ;set cycle-length round ( 1 / cycle-length )
-    set cycle-length round ( cycle-length + epsilon * ( natural-cycle-length - cycle-length) + _max * ( upper-cycle-length - cycle-length ) - _min * ( lower-cycle-length - cycle-length ) )
+    let omega_l 1 / upper-cycle-length
+    let omega_u 1 / lower-cycle-length
+    let omega 1 / natural-cycle-length
+    let omega_i 1 / cycle-length
+    set omega_i ( omega_i + epsilon * ( omega - omega_i) + _max * ( omega_l - omega_i ) - _min * ( omega_u - omega_i ) )
+    set cycle-length round ( 1 / omega_i )
     if cycle-length < lower-cycle-length [ set cycle-length lower-cycle-length ]
     if cycle-length > upper-cycle-length [ set cycle-length upper-cycle-length ]
   ]
@@ -133,7 +145,7 @@ flash-length
 flash-length
 1
 10
-1.0
+3.0
 1
 1
 NIL
@@ -178,7 +190,7 @@ SWITCH
 253
 show-dark-fireflies?
 show-dark-fireflies?
-0
+1
 1
 -1000
 
@@ -238,36 +250,6 @@ epsilon
 0.01
 0.01
 0.0001
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-515
-182
-548
-upper-cycle-length
-upper-cycle-length
-0
-10
-9.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-550
-182
-583
-lower-cycle-length
-lower-cycle-length
-0
-10
-1.0
-1
 1
 NIL
 HORIZONTAL
