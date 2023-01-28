@@ -11,14 +11,20 @@ globals [
   number-rewired                       ; number of edges that have been rewired
   rewire-one?                          ; these two variables record which button was last pushed
   rewire-all?
-  natural-cycle-length                 ; natural cycle length
+  upper-cycle-length
+  lower-cycle-length
 ]
 
 turtles-own [
-  clock                       ; each firefly's clock
+  clock        ;; each firefly's clock
+  threshold    ;; the clock tick at which a firefly stops its flash
+  reset-level  ;; the clock tick a firefly will reset to when it is triggered by other flashing
   distance-from-other-turtles ; list of distances of this node from other turtles
   my-clustering-coefficient   ; the current clustering coefficient of this node
-  cycle-length                ; actual cyce length of each turtle
+  cycle-length
+  natural-cycle-length
+  first-cycle-length
+  first-flash
 ]
 
 links-own [
@@ -36,7 +42,8 @@ end
 to setup
   clear-all
 
-  check-boundaries
+  set upper-cycle-length 115
+  set lower-cycle-length 85
 
   ; set the global variables
   set infinity 99999      ; this is an arbitrary choice for a large number
@@ -46,12 +53,19 @@ to setup
   ; make the nodes and arrange them in a circle in order by who number
   set-default-shape turtles "circle"
   create-turtles num-nodes [
-    set color gray + 2
+    set first-cycle-length random(300)
+    set first-flash 0
+    set natural-cycle-length lower-cycle-length + (random (upper-cycle-length - lower-cycle-length))
+    set cycle-length natural-cycle-length
+    set clock random (round cycle-length)
+    set threshold flash-length
+    set reset-level threshold
+    set size 2  ;; easier to see
+    set color gray - 2
   ]
   layout-circle (sort turtles) max-pxcor - 1
 
   ; Fix the color scheme
-  ask turtles [ set color gray + 2 ]
   ask links [ set color gray + 2 ]
 
   wire-lattice
@@ -70,7 +84,6 @@ to setup
 end
 
 to go
-  check-boundaries
   ask turtles [
     increment-clock
     look
@@ -360,36 +373,48 @@ to do-highlight
   ]
 end
 
-to check-boundaries
-  if upper-cycle-length <= lower-cycle-length [
-    user-message "lower-cycle-length can not be bigger than upper-cycle-length"
-    stop
-  ]
-end
-
 ;;;;;;;;;;;;;;;;;;;
 ;;   Sync part   ;;
 ;;;;;;;;;;;;;;;;;;;
 
 to increment-clock ; turtle procedure
   set clock (clock + 1)
-  if clock = cycle-length
-    [ set clock 0 ]
+  if clock = first-cycle-length and first-flash = 0 [
+   set first-flash 1
+   set clock 0
+  ]
+  if clock = cycle-length and first-flash = 1 [
+    set clock 0
+  ]
 end
 
+
 to look ; turtle procedure
-  if count turtles in-radius 1 with [color = yellow] >= 0;flashes-to-reset
-    [ set clock 0];reset-level ]
+  if count link-neighbors with [color = yellow] >= flashes-to-reset [
+    let _sin (sin ( 360 * ( clock / cycle-length ) ) ) / (2 * pi)
+    let _max  0
+    if _sin > 0 [ set _max _sin ]
+    let _min 0
+    if _sin < 0 [ set _min _sin ]
+    let omega_l ( 1 / upper-cycle-length )
+    let omega_u ( 1 / lower-cycle-length )
+    let omega ( 1 / natural-cycle-length )
+    let omega_i ( 1 / cycle-length )
+    set omega_i ( omega_i + 0.01 * ( omega - omega_i) + _max * ( omega_l - omega_i ) - _min * ( omega_u - omega_i ) )
+    set cycle-length round ( 1 / omega_i )
+    if cycle-length < lower-cycle-length [ set cycle-length lower-cycle-length ]
+    if cycle-length > upper-cycle-length [ set cycle-length upper-cycle-length ]
+  ]
 end
 
 to recolor ; turtle procedure
-  ifelse (clock < 0);threshold)
+  ifelse (clock < threshold)
     [ show-turtle
       set color yellow ]
-    [ set color gray - 2
-      ifelse show-dark-nodes?
-        [ show-turtle ]
-        [ hide-turtle ] ]
+  [ set color gray - 2]
+      ;ifelse show-dark-fireflies?
+        ;[ show-turtle ]
+       ;[ hide-turtle ] ]
 end
 
 
@@ -399,11 +424,11 @@ end
 GRAPHICS-WINDOW
 10
 50
-438
-479
+774
+815
 -1
 -1
-12.0
+21.6
 1
 10
 1
@@ -431,18 +456,18 @@ SLIDER
 num-nodes
 num-nodes
 10
-100
-100.0
+1000
+1000.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-445
-100
-990
-145
+1000
+105
+1545
+150
 highlighted node properties
 highlight-string
 3
@@ -450,10 +475,10 @@ highlight-string
 11
 
 BUTTON
-445
-65
-990
-98
+1000
+70
+1545
+103
 NIL
 highlight
 T
@@ -467,10 +492,10 @@ NIL
 1
 
 MONITOR
-50
-485
-222
-530
+25
+745
+197
+790
 clustering-coefficient (cc)
 clustering-coefficient
 3
@@ -478,10 +503,10 @@ clustering-coefficient
 11
 
 MONITOR
-225
-485
-397
-530
+200
+745
+372
+790
 average-path-length (apl)
 average-path-length
 3
@@ -506,20 +531,20 @@ NIL
 1
 
 CHOOSER
-650
-10
-789
-55
+1205
+15
+1344
+60
 network-type
 network-type
 "Lattice" "Small World" "Random"
-2
+0
 
 BUTTON
-445
-160
-630
-193
+1000
+165
+1185
+198
 go-once
 go
 NIL
@@ -533,10 +558,10 @@ NIL
 1
 
 BUTTON
-645
-160
-830
-193
+1200
+165
+1385
+198
 go-forever
 go
 T
@@ -549,57 +574,201 @@ NIL
 NIL
 1
 
-SLIDER
-445
-210
-617
-243
-lower-cycle-length
-lower-cycle-length
-1
-15
-5.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-625
-210
-797
-243
-upper-cycle-length
-upper-cycle-length
-2
-20
-6.0
-1
-1
-NIL
-HORIZONTAL
-
 SWITCH
-445
-255
-602
-288
+1000
+260
+1157
+293
 show-dark-nodes?
 show-dark-nodes?
 0
 1
 -1000
 
+SLIDER
+1210
+255
+1382
+288
+flash-length
+flash-length
+0
+10
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1215
+330
+1387
+363
+flashes-to-reset
+flashes-to-reset
+0
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+1880
+520
+2250
+795
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"set-plot-y-range 0 num-nodes" ""
+PENS
+"flashing" 1.0 0 -2674135 true "" "plot count turtles with [color = yellow]"
+
 MONITOR
-445
-300
-562
-345
-natural cycle length
-natural-cycle-length
+1630
+15
+1777
+60
+NIL
+[cycle-length] of turtle 0
 17
 1
 11
+
+MONITOR
+1630
+60
+1777
+105
+NIL
+[cycle-length] of turtle 1
+17
+1
+11
+
+MONITOR
+1630
+105
+1777
+150
+NIL
+[cycle-length] of turtle 2
+17
+1
+11
+
+MONITOR
+1630
+150
+1777
+195
+NIL
+[cycle-length] of turtle 3
+17
+1
+11
+
+MONITOR
+1630
+195
+1777
+240
+NIL
+[cycle-length] of turtle 4
+17
+1
+11
+
+MONITOR
+1630
+240
+1777
+285
+NIL
+[cycle-length] of turtle 5
+17
+1
+11
+
+MONITOR
+1630
+285
+1777
+330
+NIL
+[cycle-length] of turtle 6
+17
+1
+11
+
+MONITOR
+1630
+330
+1777
+375
+NIL
+[cycle-length] of turtle 7
+17
+1
+11
+
+MONITOR
+1630
+375
+1777
+420
+NIL
+[cycle-length] of turtle 8
+17
+1
+11
+
+MONITOR
+1630
+420
+1777
+465
+NIL
+[cycle-length] of turtle 9
+17
+1
+11
+
+PLOT
+990
+480
+1775
+805
+plot 2
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot [cycle-length] of turtle 0"
+"pen-1" 1.0 0 -7500403 true "" "plot [cycle-length] of turtle 1"
+"pen-2" 1.0 0 -2674135 true "" "plot [cycle-length] of turtle 2"
+"pen-3" 1.0 0 -955883 true "" "plot [cycle-length] of turtle 3"
+"pen-4" 1.0 0 -6459832 true "" "plot [cycle-length] of turtle 4"
+"pen-5" 1.0 0 -1184463 true "" "plot [cycle-length] of turtle 5"
+"pen-6" 1.0 0 -10899396 true "" "plot [cycle-length] of turtle 6"
+"pen-7" 1.0 0 -13840069 true "" "plot [cycle-length] of turtle 7"
+"pen-8" 1.0 0 -14835848 true "" "plot [cycle-length] of turtle 8"
+"pen-9" 1.0 0 -11221820 true "" "plot [cycle-length] of turtle 9"
 
 @#$#@#$#@
 ## WHAT IS IT?
