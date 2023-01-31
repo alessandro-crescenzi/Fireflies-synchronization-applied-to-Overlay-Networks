@@ -1,6 +1,6 @@
 globals [
   infinity         ; used to represent the distance between two turtles with no path between them
-  highlight-string ; message that appears on the node properties monitor
+  ; highlight-string ; message that appears on the node properties monitor
 
   average-path-length-of-lattice       ; average path length of the initial lattice
   average-path-length                  ; average path length in the current network
@@ -35,9 +35,9 @@ links-own [
 ;; Setup Procedures ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-to startup
-  set highlight-string ""
-end
+;to startup
+;  set highlight-string ""
+;end
 
 to setup
   clear-all
@@ -48,7 +48,7 @@ to setup
   ; set the global variables
   set infinity 99999      ; this is an arbitrary choice for a large number
   set number-rewired 0    ; initial count of rewired edges
-  set highlight-string "" ; clear the highlight monitor
+  ;set highlight-string "" ; clear the highlight monitor
 
   ; make the nodes and arrange them in a circle in order by who number
   set-default-shape turtles "circle"
@@ -60,7 +60,7 @@ to setup
     set clock random (round cycle-length)
     set threshold flash-length
     set reset-level threshold
-    set size 2  ;; easier to see
+    ifelse num-nodes < 100 [ set size 2 ] [ set size 1 ]
     set color gray - 2
   ]
   layout-circle (sort turtles) max-pxcor - 1
@@ -323,55 +323,55 @@ end
 ;; Highlighting ;;
 ;;;;;;;;;;;;;;;;;;
 
-to highlight
-  ; remove any previous highlights
-  ask turtles [ set color gray + 2 ]
-  ask links   [ set color gray + 2 ]
+;to highlight
+;  ; remove any previous highlights
+;  ask turtles [ set color gray + 2 ]
+;  ask links   [ set color gray + 2 ]
+;
+;  ; if the mouse is in the View, go ahead and highlight
+;  if mouse-inside? [ do-highlight ]
+;
+;  ; force updates since we don't use ticks
+;  display
+;end
 
-  ; if the mouse is in the View, go ahead and highlight
-  if mouse-inside? [ do-highlight ]
-
-  ; force updates since we don't use ticks
-  display
-end
-
-to do-highlight
-  ; getting the node closest to the mouse
-  let min-d min [ distancexy mouse-xcor mouse-ycor ] of turtles
-  let node one-of turtles with [count link-neighbors > 0 and distancexy mouse-xcor mouse-ycor = min-d]
-
-  if node != nobody [
-    ; highlight the chosen node
-    ask node [
-      set color white
-      let pairs (length remove infinity distance-from-other-turtles)
-      let my-apl (sum remove infinity distance-from-other-turtles) / pairs
-
-      ; show node's statistics
-      let coefficient-description ifelse-value my-clustering-coefficient = "undefined"
-        ["undefined for single-link"]
-        [precision my-clustering-coefficient 3]
-      set highlight-string (word "clustering coefficient = " coefficient-description
-        " and avg path length = " precision my-apl 3
-        " (for " pairs " turtles )")
-    ]
-
-    let neighbor-nodes [ link-neighbors ] of node
-    let direct-links [ my-links ] of node
-
-    ; highlight neighbors
-    ask neighbor-nodes [
-      set color orange
-      ; highlight edges connecting the chosen node to its neighbors
-      ask my-links [
-        ifelse (end1 = node or end2 = node)
-          [ set color orange ]
-          [ if (member? end1 neighbor-nodes and member? end2 neighbor-nodes) [ set color yellow ]
-        ]
-      ]
-    ]
-  ]
-end
+;to do-highlight
+;  ; getting the node closest to the mouse
+;  let min-d min [ distancexy mouse-xcor mouse-ycor ] of turtles
+;  let node one-of turtles with [count link-neighbors > 0 and distancexy mouse-xcor mouse-ycor = min-d]
+;
+;  if node != nobody [
+;    ; highlight the chosen node
+;    ask node [
+;      set color white
+;      let pairs (length remove infinity distance-from-other-turtles)
+;      let my-apl (sum remove infinity distance-from-other-turtles) / pairs
+;
+;      ; show node's statistics
+;      let coefficient-description ifelse-value my-clustering-coefficient = "undefined"
+;        ["undefined for single-link"]
+;        [precision my-clustering-coefficient 3]
+;      set highlight-string (word "clustering coefficient = " coefficient-description
+;        " and avg path length = " precision my-apl 3
+;        " (for " pairs " turtles )")
+;    ]
+;
+;    let neighbor-nodes [ link-neighbors ] of node
+;    let direct-links [ my-links ] of node
+;
+;    ; highlight neighbors
+;    ask neighbor-nodes [
+;      set color orange
+;      ; highlight edges connecting the chosen node to its neighbors
+;      ask my-links [
+;        ifelse (end1 = node or end2 = node)
+;          [ set color orange ]
+;          [ if (member? end1 neighbor-nodes and member? end2 neighbor-nodes) [ set color yellow ]
+;        ]
+;      ]
+;    ]
+;  ]
+;end
 
 ;;;;;;;;;;;;;;;;;;;
 ;;   Sync part   ;;
@@ -422,13 +422,13 @@ end
 ; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
+0
 10
-50
-774
-815
+613
+624
 -1
 -1
-21.6
+5.0
 1
 10
 1
@@ -438,64 +438,36 @@ GRAPHICS-WINDOW
 0
 0
 1
--17
-17
--17
-17
+-60
+60
+-60
+60
 1
 1
-0
+1
 ticks
 30.0
 
 SLIDER
-120
+620
 10
-435
+935
 43
 num-nodes
 num-nodes
 10
-1000
-1000.0
+100
+66.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-1000
-105
-1545
-150
-highlighted node properties
-highlight-string
-3
-1
-11
-
-BUTTON
-1000
-70
-1545
-103
-NIL
-highlight
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-MONITOR
-25
-745
-197
-790
+1110
+50
+1282
+95
 clustering-coefficient (cc)
 clustering-coefficient
 3
@@ -503,10 +475,10 @@ clustering-coefficient
 11
 
 MONITOR
-200
-745
-372
-790
+940
+50
+1112
+95
 average-path-length (apl)
 average-path-length
 3
@@ -514,10 +486,10 @@ average-path-length
 11
 
 BUTTON
-11
-10
-116
-43
+620
+50
+725
+83
 setup
 setup
 NIL
@@ -530,21 +502,11 @@ NIL
 NIL
 1
 
-CHOOSER
-1205
-15
-1344
-60
-network-type
-network-type
-"Lattice" "Small World" "Random"
-0
-
 BUTTON
-1000
-165
-1185
-198
+730
+50
+815
+83
 go-once
 go
 NIL
@@ -558,10 +520,10 @@ NIL
 1
 
 BUTTON
-1200
-165
-1385
-198
+820
+50
+920
+83
 go-forever
 go
 T
@@ -574,22 +536,11 @@ NIL
 NIL
 1
 
-SWITCH
-1000
-260
-1157
-293
-show-dark-nodes?
-show-dark-nodes?
-0
-1
--1000
-
 SLIDER
-1210
-255
-1382
-288
+945
+10
+1117
+43
 flash-length
 flash-length
 0
@@ -601,10 +552,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1215
-330
-1387
-363
+1125
+10
+1297
+43
 flashes-to-reset
 flashes-to-reset
 0
@@ -616,10 +567,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1880
-520
-2250
-795
+620
+105
+1495
+370
 plot 1
 NIL
 NIL
@@ -744,10 +695,10 @@ NIL
 11
 
 PLOT
-990
-480
-1775
-805
+620
+370
+1495
+625
 plot 2
 NIL
 NIL
@@ -769,6 +720,16 @@ PENS
 "pen-7" 1.0 0 -13840069 true "" "plot [cycle-length] of turtle 7"
 "pen-8" 1.0 0 -14835848 true "" "plot [cycle-length] of turtle 8"
 "pen-9" 1.0 0 -11221820 true "" "plot [cycle-length] of turtle 9"
+
+CHOOSER
+1310
+10
+1449
+55
+network-type
+network-type
+"Lattice" "Small World" "Random"
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
