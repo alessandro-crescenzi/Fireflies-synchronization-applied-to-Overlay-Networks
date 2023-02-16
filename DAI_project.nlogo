@@ -571,14 +571,14 @@ PLOT
 105
 1495
 370
-plot 1
-NIL
-NIL
+Number of simoultaneously flashing nodes
+time
+number
+300.0
+2500.0
 0.0
 10.0
-0.0
-10.0
-true
+false
 false
 "set-plot-y-range 0 num-nodes" ""
 PENS
@@ -729,7 +729,7 @@ CHOOSER
 network-type
 network-type
 "Lattice" "Small World" "Random"
-1
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
