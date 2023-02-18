@@ -84,7 +84,8 @@ end
 
 to go
   check-sync
-  if synchronized = 1 [
+  if synchronized = 1 and continue-after-sync? = false [
+    reset-ticks
     stop
   ]
   ask turtles [
@@ -141,7 +142,7 @@ to rewire
 
     ; if the apl is infinity, it means our new network is not connected. Reset the lattice.
     ifelse find-average-path-length = infinity [ set connected? false ] [ set connected? true ]
-    if network-type = "Random" [ ifelse find-clustering-coefficient < (clustering-coefficient-of-lattice * 0.1) [set connected? true] [set connected? false] ]
+    if network-type = "Random" [ ifelse find-clustering-coefficient < 0.01 [set connected? true] [set connected? false] ]
     if network-type = "Small World" [ ifelse (find-clustering-coefficient > 0.2 and find-clustering-coefficient < 0.3) [set connected? true] [set connected? false] ]
   ]
 
@@ -416,23 +417,23 @@ ticks
 SLIDER
 620
 10
-935
+1090
 43
 num-nodes
 num-nodes
 10
 100
-20.0
+17.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-1110
-50
-1282
-95
+790
+110
+962
+155
 clustering-coefficient (cc)
 clustering-coefficient
 3
@@ -440,10 +441,10 @@ clustering-coefficient
 11
 
 MONITOR
-940
-50
-1112
-95
+620
+110
+792
+155
 average-path-length (apl)
 average-path-length
 3
@@ -451,10 +452,10 @@ average-path-length
 11
 
 BUTTON
-620
-50
-725
-83
+750
+170
+870
+215
 setup
 setup
 NIL
@@ -468,10 +469,10 @@ NIL
 1
 
 BUTTON
-730
-50
-815
-83
+875
+170
+980
+215
 go-once
 go
 NIL
@@ -485,10 +486,10 @@ NIL
 1
 
 BUTTON
-820
-50
-920
-83
+985
+170
+1100
+215
 go-forever
 go
 T
@@ -502,9 +503,9 @@ NIL
 1
 
 SLIDER
-945
+1125
 10
-1117
+1297
 43
 flash-length
 flash-length
@@ -518,9 +519,9 @@ HORIZONTAL
 
 SLIDER
 1125
-10
+45
 1297
-43
+78
 flashes-to-reset
 flashes-to-reset
 0
@@ -533,27 +534,28 @@ HORIZONTAL
 
 PLOT
 620
-105
-1495
-370
+225
+1330
+421
 Number of simoultaneously flashing nodes
 time
 number
 300.0
-2500.0
+1000.0
 0.0
 10.0
+true
 false
-false
-"set-plot-y-range 0 num-nodes" ""
+"" ""
 PENS
-"flashing" 1.0 0 -2674135 true "" "plot count turtles with [color = yellow]"
+"flashing" 1.0 0 -2674135 true "" "plot count turtles with [color = yellow]\n\nif ticks < 300\n[\n  set-plot-x-range 300 1000\n]"
+"sync" 1.0 0 -16777216 true "" "plot synchronized * 10\nif ticks < 300\n[\n  set-plot-x-range 300 1000\n]"
 
 MONITOR
-1630
-15
-1777
-60
+1340
+10
+1487
+55
 NIL
 [cycle-length] of turtle 0
 17
@@ -561,10 +563,10 @@ NIL
 11
 
 MONITOR
-1630
-60
-1777
-105
+1340
+55
+1487
+100
 NIL
 [cycle-length] of turtle 1
 17
@@ -572,10 +574,10 @@ NIL
 11
 
 MONITOR
-1630
-105
-1777
-150
+1340
+100
+1487
+145
 NIL
 [cycle-length] of turtle 2
 17
@@ -583,10 +585,10 @@ NIL
 11
 
 MONITOR
-1630
-150
-1777
-195
+1340
+145
+1487
+190
 NIL
 [cycle-length] of turtle 3
 17
@@ -594,10 +596,10 @@ NIL
 11
 
 MONITOR
-1630
-195
-1777
-240
+1340
+190
+1487
+235
 NIL
 [cycle-length] of turtle 4
 17
@@ -605,10 +607,10 @@ NIL
 11
 
 MONITOR
-1630
-240
-1777
-285
+1340
+235
+1487
+280
 NIL
 [cycle-length] of turtle 5
 17
@@ -616,10 +618,10 @@ NIL
 11
 
 MONITOR
-1630
-285
-1777
-330
+1340
+280
+1487
+325
 NIL
 [cycle-length] of turtle 6
 17
@@ -627,10 +629,10 @@ NIL
 11
 
 MONITOR
-1630
-330
-1777
-375
+1340
+325
+1487
+370
 NIL
 [cycle-length] of turtle 7
 17
@@ -638,10 +640,10 @@ NIL
 11
 
 MONITOR
-1630
-375
-1777
-420
+1340
+370
+1487
+415
 NIL
 [cycle-length] of turtle 8
 17
@@ -649,10 +651,10 @@ NIL
 11
 
 MONITOR
-1630
-420
-1777
-465
+1340
+415
+1487
+460
 NIL
 [cycle-length] of turtle 9
 17
@@ -661,10 +663,10 @@ NIL
 
 PLOT
 620
-370
-1495
-625
-plot 2
+420
+1330
+626
+cycle-length of the first 10 nodes
 NIL
 NIL
 0.0
@@ -687,20 +689,20 @@ PENS
 "pen-9" 1.0 0 -11221820 true "" "plot [cycle-length] of turtle 9"
 
 CHOOSER
-1310
-10
-1449
+950
 55
+1089
+100
 network-type
 network-type
 "Lattice" "Small World" "Random"
 0
 
 MONITOR
-1485
-25
-1567
-70
+1220
+170
+1302
+215
 NIL
 synchronized
 17
@@ -708,30 +710,41 @@ synchronized
 11
 
 SLIDER
-1295
+620
 60
-1467
+895
 93
 silence-time-baseline
 silence-time-baseline
 20
 100
-20.0
+80.0
 10
 1
 NIL
 HORIZONTAL
 
 MONITOR
-1530
-115
-1587
-160
-NIL
-ticks
+1137
+170
+1204
+215
+time (s)
+(ticks - 300) / 100
 17
 1
 11
+
+SWITCH
+1125
+85
+1292
+118
+continue-after-sync?
+continue-after-sync?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -745,12 +758,6 @@ This model wants to evaluate the application of the Ermentrout Synchronization m
 ## HOW TO USE IT
 
 The NUM-NODES slider controls the size of the network. Choose a size and press SETUP.
-
-Pressing the REWIRE-ONE button picks one edge at random, rewires it, and then plots the resulting network properties in the "Network Properties Rewire-One" graph. The REWIRE-ONE button _ignores_ the REWIRING-PROBABILITY slider. It will always rewire one exactly one edge in the network that has not yet been rewired _unless_ all edges in the network have already been rewired.
-
-Pressing the REWIRE-ALL button starts with a new lattice (just like pressing SETUP) and then rewires all of the edges edges according to the current REWIRING-PROBABILITY. In other words, it `asks` each `edge` to roll a die that will determine whether or not it is rewired. The resulting network properties are then plotted on the "Network Properties Rewire-All" graph. Changing the REWIRING-PROBABILITY slider changes the fraction of edges rewired during each run. Running REWIRE-ALL at multiple probabilities produces a range of possible networks with varying average path lengths and clustering coefficients.
-
-When you press HIGHLIGHT and then point to a node in the view it color-codes the nodes and edges. The node itself turns white. Its neighbors and the edges connecting the node to those neighbors turn orange. Edges connecting the neighbors of the node to each other turn yellow. The amount of yellow between neighbors gives you a sort of indication of the clustering coefficient for that node. The NODE-PROPERTIES monitor displays the average path length and clustering coefficient of the highlighted node only. The AVERAGE-PATH-LENGTH and CLUSTERING-COEFFICIENT monitors display the values for the entire network.
 
 ### Statistics
 
@@ -1156,12 +1163,16 @@ repeat 5 [rewire-one]
   <experiment name="experiment" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
+    <timeLimit steps="20000"/>
     <exitCondition>synchronized = 1</exitCondition>
     <enumeratedValueSet variable="network-type">
-      <value value="&quot;Lattice&quot;"/>
+      <value value="&quot;Random&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-nodes">
       <value value="20"/>
+      <value value="40"/>
+      <value value="60"/>
+      <value value="80"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="flash-length">
       <value value="2"/>
