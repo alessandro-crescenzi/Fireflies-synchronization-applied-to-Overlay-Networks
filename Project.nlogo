@@ -1,6 +1,5 @@
 globals [
   infinity         ; used to represent the distance between two turtles with no path between them
-  highlight-string ; message that appears on the node properties monitor
 
   average-path-length-of-lattice       ; average path length of the initial lattice
   average-path-length                  ; average path length in the current network
@@ -13,6 +12,9 @@ globals [
   rewire-all?
   upper-cycle-length
   lower-cycle-length
+
+  silence-time
+  synchronized
 ]
 
 turtles-own [
@@ -35,20 +37,17 @@ links-own [
 ;; Setup Procedures ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-to startup
-  set highlight-string ""
-end
-
 to setup
   clear-all
+
+  set silence-time 0
+  set synchronized 0
 
   set upper-cycle-length 115
   set lower-cycle-length 85
 
-  ; set the global variables
   set infinity 99999      ; this is an arbitrary choice for a large number
   set number-rewired 0    ; initial count of rewired edges
-  set highlight-string "" ; clear the highlight monitor
 
   ; make the nodes and arrange them in a circle in order by who number
   set-default-shape turtles "circle"
@@ -60,7 +59,7 @@ to setup
     set clock random (round cycle-length)
     set threshold flash-length
     set reset-level threshold
-    set size 2  ;; easier to see
+    ifelse num-nodes < 100 [ set size 2 ] [ set size 1 ]
     set color gray - 2
   ]
   layout-circle (sort turtles) max-pxcor - 1
@@ -84,6 +83,10 @@ to setup
 end
 
 to go
+  check-sync
+  if synchronized = 1 [
+    stop
+  ]
   ask turtles [
     increment-clock
     look
@@ -139,7 +142,7 @@ to rewire
     ; if the apl is infinity, it means our new network is not connected. Reset the lattice.
     ifelse find-average-path-length = infinity [ set connected? false ] [ set connected? true ]
     if network-type = "Random" [ ifelse find-clustering-coefficient < (clustering-coefficient-of-lattice * 0.1) [set connected? true] [set connected? false] ]
-    if network-type = "Small World" [ ifelse find-clustering-coefficient > (clustering-coefficient-of-lattice * 0.8) [set connected? true] [set connected? false] ]
+    if network-type = "Small World" [ ifelse (find-clustering-coefficient > 0.2 and find-clustering-coefficient < 0.3) [set connected? true] [set connected? false] ]
   ]
 
   ; calculate the statistics and visualize the data
@@ -319,63 +322,25 @@ to make-edge [ node-A node-B the-shape ]
   ]
 end
 
-;;;;;;;;;;;;;;;;;;
-;; Highlighting ;;
-;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;
+;;   Sync part   ;;
+;;;;;;;;;;;;;;;;;;;
 
-to highlight
-  ; remove any previous highlights
-  ask turtles [ set color gray + 2 ]
-  ask links   [ set color gray + 2 ]
-
-  ; if the mouse is in the View, go ahead and highlight
-  if mouse-inside? [ do-highlight ]
-
-  ; force updates since we don't use ticks
-  display
-end
-
-to do-highlight
-  ; getting the node closest to the mouse
-  let min-d min [ distancexy mouse-xcor mouse-ycor ] of turtles
-  let node one-of turtles with [count link-neighbors > 0 and distancexy mouse-xcor mouse-ycor = min-d]
-
-  if node != nobody [
-    ; highlight the chosen node
-    ask node [
-      set color white
-      let pairs (length remove infinity distance-from-other-turtles)
-      let my-apl (sum remove infinity distance-from-other-turtles) / pairs
-
-      ; show node's statistics
-      let coefficient-description ifelse-value my-clustering-coefficient = "undefined"
-        ["undefined for single-link"]
-        [precision my-clustering-coefficient 3]
-      set highlight-string (word "clustering coefficient = " coefficient-description
-        " and avg path length = " precision my-apl 3
-        " (for " pairs " turtles )")
+to check-sync
+  if ticks > 300 [
+    ifelse count turtles with [color = yellow] = 0 [
+      set silence-time silence-time + 1
     ]
-
-    let neighbor-nodes [ link-neighbors ] of node
-    let direct-links [ my-links ] of node
-
-    ; highlight neighbors
-    ask neighbor-nodes [
-      set color orange
-      ; highlight edges connecting the chosen node to its neighbors
-      ask my-links [
-        ifelse (end1 = node or end2 = node)
-          [ set color orange ]
-          [ if (member? end1 neighbor-nodes and member? end2 neighbor-nodes) [ set color yellow ]
-        ]
+    [
+      ifelse silence-time > silence-time-baseline [
+        set synchronized 1
+      ]
+      [
+        set silence-time 0
       ]
     ]
   ]
 end
-
-;;;;;;;;;;;;;;;;;;;
-;;   Sync part   ;;
-;;;;;;;;;;;;;;;;;;;
 
 to increment-clock ; turtle procedure
   set clock (clock + 1)
@@ -422,13 +387,13 @@ end
 ; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
+0
 10
-50
-774
-815
+613
+624
 -1
 -1
-21.6
+5.0
 1
 10
 1
@@ -438,64 +403,36 @@ GRAPHICS-WINDOW
 0
 0
 1
--17
-17
--17
-17
+-60
+60
+-60
+60
 1
 1
-0
+1
 ticks
 30.0
 
 SLIDER
-120
+620
 10
-435
+935
 43
 num-nodes
 num-nodes
 10
-1000
-1000.0
+100
+20.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-1000
-105
-1545
-150
-highlighted node properties
-highlight-string
-3
-1
-11
-
-BUTTON
-1000
-70
-1545
-103
-NIL
-highlight
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-MONITOR
-25
-745
-197
-790
+1110
+50
+1282
+95
 clustering-coefficient (cc)
 clustering-coefficient
 3
@@ -503,10 +440,10 @@ clustering-coefficient
 11
 
 MONITOR
-200
-745
-372
-790
+940
+50
+1112
+95
 average-path-length (apl)
 average-path-length
 3
@@ -514,10 +451,10 @@ average-path-length
 11
 
 BUTTON
-11
-10
-116
-43
+620
+50
+725
+83
 setup
 setup
 NIL
@@ -530,21 +467,11 @@ NIL
 NIL
 1
 
-CHOOSER
-1205
-15
-1344
-60
-network-type
-network-type
-"Lattice" "Small World" "Random"
-0
-
 BUTTON
-1000
-165
-1185
-198
+730
+50
+815
+83
 go-once
 go
 NIL
@@ -558,10 +485,10 @@ NIL
 1
 
 BUTTON
-1200
-165
-1385
-198
+820
+50
+920
+83
 go-forever
 go
 T
@@ -574,22 +501,11 @@ NIL
 NIL
 1
 
-SWITCH
-1000
-260
-1157
-293
-show-dark-nodes?
-show-dark-nodes?
-0
-1
--1000
-
 SLIDER
-1210
-255
-1382
-288
+945
+10
+1117
+43
 flash-length
 flash-length
 0
@@ -601,10 +517,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1215
-330
-1387
-363
+1125
+10
+1297
+43
 flashes-to-reset
 flashes-to-reset
 0
@@ -616,18 +532,18 @@ NIL
 HORIZONTAL
 
 PLOT
-1880
-520
-2250
-795
-plot 1
-NIL
-NIL
+620
+105
+1495
+370
+Number of simoultaneously flashing nodes
+time
+number
+300.0
+2500.0
 0.0
 10.0
-0.0
-10.0
-true
+false
 false
 "set-plot-y-range 0 num-nodes" ""
 PENS
@@ -744,10 +660,10 @@ NIL
 11
 
 PLOT
-990
-480
-1775
-805
+620
+370
+1495
+625
 plot 2
 NIL
 NIL
@@ -770,18 +686,61 @@ PENS
 "pen-8" 1.0 0 -14835848 true "" "plot [cycle-length] of turtle 8"
 "pen-9" 1.0 0 -11221820 true "" "plot [cycle-length] of turtle 9"
 
+CHOOSER
+1310
+10
+1449
+55
+network-type
+network-type
+"Lattice" "Small World" "Random"
+0
+
+MONITOR
+1485
+25
+1567
+70
+NIL
+synchronized
+17
+1
+11
+
+SLIDER
+1295
+60
+1467
+93
+silence-time-baseline
+silence-time-baseline
+20
+100
+20.0
+10
+1
+NIL
+HORIZONTAL
+
+MONITOR
+1530
+115
+1587
+160
+NIL
+ticks
+17
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-This model explores the formation of networks that result in the "small world" phenomenon -- the idea that a person is only a couple of connections away from any other person in the world.
-
-A popular example of the small world phenomenon is the network formed by actors appearing in the same movie (e.g., "[Six Degrees of Kevin Bacon](https://en.wikipedia.org/wiki/Six_Degrees_of_Kevin_Bacon)"), but small worlds are not limited to people-only networks. Other examples range from power grids to the neural networks of worms. This model illustrates some general, theoretical conditions under which small world networks between people or things might occur.
+This model is an application of the Firefiles Synchronization model (http://ccl.northwestern.edu/netlogo/models/Fireflies) for the synchronization of Overlay Networks (https://en.wikipedia.org/wiki/Overlay_network). This model takes inspiration from "Firefly-inspired Heartbeat Synchronization in Overlay Networks" (https://doi.org/10.1109/SASO.2007.25).
 
 ## HOW IT WORKS
 
-This model is an adaptation of the [Watts-Strogatz model](https://en.wikipedia.org/wiki/Watts-Strogatz_model) proposed by Duncan Watts and Steve Strogatz (1998). It begins with a network where each person (or "node") is connected to his or her two neighbors on either side. Using this a base, we then modify the network by rewiring nodes–changing one end of a connected pair of nodes and keeping the other end the same. Over time, we analyze the effect this rewiring has the on various connections between nodes and on the properties of the network.
-
-Particularly, we're interested in identifying "small worlds." To identify small worlds, the "average path length" (abbreviated "apl") and "clustering coefficient" (abbreviated "cc") of the network are calculated and plotted after a rewiring is performed. Networks with _short_ average path lengths and _high_ clustering coefficients are considered small world networks. See the **Statistics** section of HOW TO USE IT on how these are calculated.
+This model wants to evaluate the application of the Ermentrout Synchronization model to different types of networks (lattice, small world and random) and different number of nodes (from 10 to 100).  
 
 ## HOW TO USE IT
 
@@ -845,23 +804,26 @@ Check out the NW Extension General Examples model to see how similar models migh
 
 ## CREDITS AND REFERENCES
 
-This model is adapted from: Duncan J. Watts, Six Degrees: The Science of a Connected Age (W.W. Norton & Company, New York, 2003), pages 83-100.
+This model is adapted from:
 
-The work described here was originally published in: DJ Watts and SH Strogatz. Collective dynamics of 'small-world' networks, Nature, 393:440-442 (1998).
+Wilensky, U. (1997). NetLogo Fireflies model. http://ccl.northwestern.edu/netlogo/models/Fireflies. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
-The small worlds idea was first made popular by Stanley Milgram's famous experiment (1967) which found that two random US citizens where on average connected by six acquaintances (giving rise to the popular "six degrees of separation" expression): Stanley Milgram. The Small World Problem, Psychology Today, 2: 60-67 (1967).
+and 
 
-This experiment was popularized into a game called "six degrees of Kevin Bacon" which you can find more information about here: https://oracleofbacon.org
+Wilensky, U. (2015). NetLogo Small Worlds model. http://ccl.northwestern.edu/netlogo/models/SmallWorlds. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
-Thanks to Connor Bain for updating this model in 2020.
+and it is a Netlogo implementation of:
+
+O. Babaoglu, T. Binci, M. Jelasity and A. Montresor, "Firefly-inspired Heartbeat Synchronization in Overlay Networks*," First International Conference on Self-Adaptive and Self-Organizing Systems (SASO 2007), Cambridge, MA, USA, 2007, pp. 77-86, doi: https://doi.org/10.1109/SASO.2007.25
 
 ## HOW TO CITE
 
-If you mention this model or the NetLogo software in a publication, we ask that you include the citations below.
+If you mention the model or the NetLogo software in a publication, you are asked to include the citations below.
 
 For the model itself:
 
-* Wilensky, U. (2015).  NetLogo Small Worlds model.  http://ccl.northwestern.edu/netlogo/models/SmallWorlds.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+* Crescenzi, A. (2023). Fireflies synchronization applied to Overlay Networks
+https://github.com/alessandro-crescenzi/Fireflies-synchronization-applied-to-Overlay-Networks
 
 Please cite the NetLogo software as:
 
@@ -869,15 +831,30 @@ Please cite the NetLogo software as:
 
 ## COPYRIGHT AND LICENSE
 
-Copyright 2015 Uri Wilensky.
+Copyright (c) 2023 Alessandro Crescenzi - alessandrocrescenzi@outlook.com
 
-![CC BY-NC-SA 3.0](http://ccl.northwestern.edu/images/creativecommons/byncsa.png)
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
 
-This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 License.  To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-Commercial licenses are also available. To inquire about commercial licenses, please contact Uri Wilensky at uri@northwestern.edu.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
 
-<!-- 2015 -->
+<!-- 2023 -->
 @#$#@#$#@
 default
 true
@@ -1175,6 +1152,29 @@ repeat 5 [rewire-one]
     <metric>average-path-length</metric>
     <metric>clustering-coefficient</metric>
     <steppedValueSet variable="rewiring-probability" first="0" step="0.025" last="1"/>
+  </experiment>
+  <experiment name="experiment" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>synchronized = 1</exitCondition>
+    <enumeratedValueSet variable="network-type">
+      <value value="&quot;Lattice&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-nodes">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="flash-length">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="flashes-to-reset">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="silence-time-baseline">
+      <value value="20"/>
+      <value value="40"/>
+      <value value="60"/>
+      <value value="80"/>
+    </enumeratedValueSet>
   </experiment>
 </experiments>
 @#$#@#$#@
