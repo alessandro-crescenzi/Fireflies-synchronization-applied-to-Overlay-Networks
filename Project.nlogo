@@ -39,6 +39,7 @@ links-own [
 
 to setup
   clear-all
+  reset-ticks
 
   set silence-time 0
   set synchronized 0
@@ -77,9 +78,7 @@ to setup
   set clustering-coefficient-of-lattice clustering-coefficient
 
   ; Create the initial lattice
-  ifelse network-type = "Lattice" [ wire-lattice ] [ rewire ]
-
-  reset-ticks
+  if network-type != "Lattice" [ rewire ]
 end
 
 to go
@@ -423,7 +422,7 @@ num-nodes
 num-nodes
 10
 100
-17.0
+30.0
 1
 1
 NIL
@@ -666,7 +665,7 @@ PLOT
 420
 1330
 626
-cycle-length of the first 10 nodes
+Cycle-length of the first 10 nodes
 NIL
 NIL
 0.0
@@ -677,16 +676,16 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot [cycle-length] of turtle 0"
-"pen-1" 1.0 0 -7500403 true "" "plot [cycle-length] of turtle 1"
-"pen-2" 1.0 0 -2674135 true "" "plot [cycle-length] of turtle 2"
-"pen-3" 1.0 0 -955883 true "" "plot [cycle-length] of turtle 3"
-"pen-4" 1.0 0 -6459832 true "" "plot [cycle-length] of turtle 4"
-"pen-5" 1.0 0 -1184463 true "" "plot [cycle-length] of turtle 5"
-"pen-6" 1.0 0 -10899396 true "" "plot [cycle-length] of turtle 6"
-"pen-7" 1.0 0 -13840069 true "" "plot [cycle-length] of turtle 7"
-"pen-8" 1.0 0 -14835848 true "" "plot [cycle-length] of turtle 8"
-"pen-9" 1.0 0 -11221820 true "" "plot [cycle-length] of turtle 9"
+"default" 1.0 0 -16777216 true "" "if ticks > 0 [ plot [cycle-length] of turtle 0 ]"
+"pen-1" 1.0 0 -7500403 true "" "if ticks > 0 [ plot [cycle-length] of turtle 1 ]"
+"pen-2" 1.0 0 -2674135 true "" "if ticks > 0 [ plot [cycle-length] of turtle 2 ]"
+"pen-3" 1.0 0 -955883 true "" "if ticks > 0 [ plot [cycle-length] of turtle 3 ]"
+"pen-4" 1.0 0 -6459832 true "" "if ticks > 0 [ plot [cycle-length] of turtle 4 ]"
+"pen-5" 1.0 0 -1184463 true "" "if ticks > 0 [ plot [cycle-length] of turtle 5 ]"
+"pen-6" 1.0 0 -10899396 true "" "if ticks > 0 [ plot [cycle-length] of turtle 6 ]"
+"pen-7" 1.0 0 -13840069 true "" "if ticks > 0 [ plot [cycle-length] of turtle 7 ]"
+"pen-8" 1.0 0 -14835848 true "" "if ticks > 0 [ plot [cycle-length] of turtle 8 ]"
+"pen-9" 1.0 0 -11221820 true "" "if ticks > 0 [ plot [cycle-length] of turtle 9 ]"
 
 CHOOSER
 950
@@ -696,7 +695,7 @@ CHOOSER
 network-type
 network-type
 "Lattice" "Small World" "Random"
-0
+2
 
 MONITOR
 1220
@@ -757,57 +756,44 @@ This model wants to evaluate the application of the Ermentrout Synchronization m
 
 ## HOW TO USE IT
 
-The NUM-NODES slider controls the size of the network. Choose a size and press SETUP.
+The NUM-NODES slider controls the size of the network.
+The FLASH-LENGTH slider controls the length of the flash in terms of ticks.
+The SILENCE-TIME-BASELINE slider controls the length of ticks between one emission and the next one. It is a relative measure of synchronization, through this you che change che meaning of synchronization.
+The NETWORK-TYPE chooser let you choose between 3 kind of network (Lattice, Small World and Random).
+The FLASHES-TO-RESET slider controls how many flashes a node mush see to recompute its own cycle-length. 
+The CONTINUE-AFTER-SYNC? toggle sets if you want to continue the simulation after the sync happened.
+
+Choose one or more of these parameters and press SETUP.
 
 ### Statistics
 
-**Average Path Length**: Average path length is calculated by finding the shortest path between all pairs of nodes, adding them up, and then dividing by the total number of pairs. This shows us, on average, the number of steps it takes to get from one node in the network to another.
 
-In order to find the shortest paths between all pairs of nodes we use the [standard dynamic programming algorithm by Floyd Warshall] (https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm). You may have noticed that the model runs slowly for large number of nodes. That is because the time it takes for the Floyd Warshall algorithm (or other "all-pairs-shortest-path" algorithm) to run grows polynomially with the number of nodes.
-
-**Clustering Coefficient**: The clustering coefficient of a _node_ is the ratio of existing edges connecting a node's neighbors to each other to the maximum possible number of such edges. It is, in essence, a measure of the "all-my-friends-know-each-other" property. The clustering coefficient for the entire network is the average of the clustering coefficients of all the nodes.
 
 ### Plots
 
-1. The "Network Properties Rewire-One" visualizes the average-path-length and clustering-coefficient of the network as the user increases the number of single-rewires in the network.
+1. The "Number of simoultaneously flashing nodes" visualizes the number of flashing nodes that simoultaneously are flashing. You will see something only after 3 secs, that is the warm up period that you must wait to let the nework to setup. After about 10 secs you will see consecutive peaks. The bigger they are the more the nodes are flashing together.
 
-2. The "Network Properties Rewire-All" visualizes the average-path-length and clustering coefficient of the network as the user manipulates the REWIRING-PROBABILITY slider.
-
-These two plots are separated because the x-axis is slightly different.  The REWIRE-ONE x-axis is the fraction of edges rewired so far, whereas the REWIRE-ALL x-axis is the probability of rewiring.
-
-The plots for both the clustering coefficient and average path length are normalized by dividing by the values of the initial lattice. The monitors CLUSTERING-COEFFICIENT and AVERAGE-PATH-LENGTH give the actual values.
+2. The "Cycle-length of the first 10 nodes" visualizes the value of the first 10 nodes of the network. This is to show the trend of the cycle lengh of the nodes and shows how they change to be synchronized.
 
 ## THINGS TO NOTICE
 
-Note that for certain ranges of the fraction of nodes rewired, the average path length decreases faster than the clustering coefficient. In fact, there is a range of values for which the average path length is much smaller than clustering coefficient. (Note that the values for average path length and clustering coefficient have been normalized, so that they are more directly comparable.) Networks in that range are considered small worlds.
+
 
 ## THINGS TO TRY
 
-Can you get a small world by repeatedly pressing REWIRE-ONE?
 
-Try plotting the values for different rewiring probabilities and observe the trends of the values for average path length and clustering coefficient.  What is the relationship between rewiring probability and fraction of nodes? In other words, what is the relationship between the rewire-one plot and the rewire-all plot?
-
-Do the trends depend on the number of nodes in the network?
-
-Set NUM-NODES to 80 and then press SETUP. Go to BehaviorSpace and run the VARY-REWIRING-PROBABILITY experiment. Try running the experiment multiple times without clearing the plot (i.e., do not run SETUP again).  What range of rewiring probabilities result in small world networks?
 
 ## EXTENDING THE MODEL
 
-Try to see if you can produce the same results if you start with a different type of initial network. Create new BehaviorSpace experiments to compare results.
 
-In a precursor to this model, Watts and Strogatz created an "alpha" model where the rewiring was not based on a global rewiring probability. Instead, the probability that a node got connected to another node depended on how many mutual connections the two nodes had. The extent to which mutual connections mattered was determined by the parameter "alpha." Create the "alpha" model and see if it also can result in small world formation.
 
 ## NETLOGO FEATURES
 
-Links are used extensively in this model to model the edges of the network. The model also uses custom link shapes for neighbor's neighbor links.
 
-Lists are used heavily in the procedures that calculates shortest paths.
 
 ## RELATED MODELS
 
-See other models in the Networks section of the Models Library, such as Giant Component and Preferential Attachment.
 
-Check out the NW Extension General Examples model to see how similar models might implemented using the built-in NW extension.
 
 ## CREDITS AND REFERENCES
 
