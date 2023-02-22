@@ -27,25 +27,6 @@ Choose one or more of these parameters and press SETUP.
 
 2. The "Cycle-length of the first 10 nodes" visualizes the value of the first 10 nodes of the network. This is to show the trend of the cycle lengh of the nodes and shows how they change to be synchronized.
 
-## THINGS TO NOTICE
-
-
-
-## THINGS TO TRY
-
-
-
-## EXTENDING THE MODEL
-
-
-
-## NETLOGO FEATURES
-
-
-
-## RELATED MODELS
-
-
 
 ## CREDITS AND REFERENCES
 
