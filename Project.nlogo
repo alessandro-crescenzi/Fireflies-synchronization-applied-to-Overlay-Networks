@@ -141,7 +141,7 @@ to rewire
 
     ; if the apl is infinity, it means our new network is not connected. Reset the lattice.
     ifelse find-average-path-length = infinity [ set connected? false ] [ set connected? true ]
-    if network-type = "Random" [ ifelse find-clustering-coefficient < 0.01 [set connected? true] [set connected? false] ]
+    if network-type = "Random" [ ifelse find-clustering-coefficient < (clustering-coefficient-of-lattice * 0.1) [set connected? true] [set connected? false] ]
     if network-type = "Small World" [ ifelse (find-clustering-coefficient > 0.2 and find-clustering-coefficient < 0.3) [set connected? true] [set connected? false] ]
   ]
 
@@ -744,6 +744,16 @@ continue-after-sync?
 0
 1
 -1000
+
+CHOOSER
+1310
+10
+1449
+55
+network-type
+network-type
+"Lattice" "Small World" "Random"
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
