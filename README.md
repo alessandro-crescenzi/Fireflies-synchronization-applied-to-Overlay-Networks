@@ -1,6 +1,6 @@
 ## WHAT IS IT?
 
-This model is an application of the Firefiles Synchronization model (http://ccl.northwestern.edu/netlogo/models/Fireflies) for the synchronization of Overlay Networks (https://en.wikipedia.org/wiki/Overlay_network). This model takes inspiration from "Firefly-inspired Heartbeat Synchronization in Overlay Networks" (https://doi.org/10.1109/SASO.2007.25).
+This model is an application of the [Firefiles Synchronization model](http://ccl.northwestern.edu/netlogo/models/Fireflies) for the [synchronization of Overlay Networks](https://en.wikipedia.org/wiki/Overlay_network). This model takes inspiration from ["Firefly-inspired Heartbeat Synchronization in Overlay Networks"](https://doi.org/10.1109/SASO.2007.25).
 
 ## HOW IT WORKS
 
@@ -32,11 +32,11 @@ Choose one or more of these parameters and press SETUP.
 
 This model is adapted from:
 
-Wilensky, U. (1997). NetLogo Fireflies model. http://ccl.northwestern.edu/netlogo/models/Fireflies. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+Wilensky, U. (1997). [NetLogo Fireflies model](http://ccl.northwestern.edu/netlogo/models/Fireflies). Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
 and 
 
-Wilensky, U. (2015). NetLogo Small Worlds model. http://ccl.northwestern.edu/netlogo/models/SmallWorlds. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+Wilensky, U. (2015). [NetLogo Small Worlds model](http://ccl.northwestern.edu/netlogo/models/SmallWorlds). Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
 and it is a Netlogo implementation of:
 
@@ -48,12 +48,11 @@ If you mention the model or the NetLogo software in a publication, you are asked
 
 For the model itself:
 
-* Crescenzi, A. (2023). Fireflies synchronization applied to Overlay Networks
-https://github.com/alessandro-crescenzi/Fireflies-synchronization-applied-to-Overlay-Networks
+* Crescenzi, A. (2023). [Fireflies synchronization applied to Overlay Networks](https://github.com/alessandro-crescenzi/Fireflies-synchronization-applied-to-Overlay-Networks)
 
 Please cite the NetLogo software as:
 
-* Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+* Wilensky, U. (1999). [NetLogo](http://ccl.northwestern.edu/netlogo/). Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
 ## COPYRIGHT AND LICENSE
 
